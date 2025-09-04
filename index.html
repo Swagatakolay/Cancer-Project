@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breast Cancer Prediction</title>
+  <style>
+    body { font-family: Arial; margin: 40px; background: #f7f9fc; color: #333; }
+    h1 { text-align: center; color: #444; }
+    form { max-width: 700px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    input { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 8px; }
+    button { margin-top: 20px; width: 100%; padding: 12px; background: #007bff; color: white; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #result { margin-top: 20px; text-align: center; font-size: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Breast Cancer Prediction</h1>
+  <form id="predictionForm">
+    <p>Enter the 30 input features below:</p>
+    <div id="inputs"></div>
+    <button type="submit">Predict</button>
+  </form>
+  <div id="result"></div>
+
+  <script>
+    const apiUrl = "https://cancer-detection-hndb.onrender.com/predict";
+
+    // Feature names
+    const featureNames = [
+      'mean radius', 'mean texture', 'mean perimeter', 'mean area', 'mean smoothness',
+      'mean compactness', 'mean concavity', 'mean concave points', 'mean symmetry', 'mean fractal dimension',
+      'radius error', 'texture error', 'perimeter error', 'area error', 'smoothness error',
+      'compactness error', 'concavity error', 'concave points error', 'symmetry error', 'fractal dimension error',
+      'worst radius', 'worst texture', 'worst perimeter', 'worst area', 'worst smoothness',
+      'worst compactness', 'worst concavity', 'worst concave points', 'worst symmetry', 'worst fractal dimension'
+    ];
+
+    // Generate 30 input fields (empty for user input)
+    const inputsDiv = document.getElementById("inputs");
+    for (let i = 0; i < 30; i++) {
+      inputsDiv.innerHTML += `
+        <label for="feature${i}">${featureNames[i]}:</label>
+        <input type="number" step="any" id="feature${i}" required>
+      `;
+    }
+
+    // Handle form submit
+    document.getElementById("predictionForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      let values = [];
+      for (let i = 0; i < 30; i++) {
+        values.push(parseFloat(document.getElementById("feature"+i).value));
+      }
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({input: values})
+        });
+
+        const result = await response.json();
+
+        document.getElementById("result").innerHTML = `
+          Prediction: <span style="color:${result.prediction === 0 ? 'red' : 'green'}">
+            ${result.prediction === 0 ? "Malignant (Cancer)" : "Benign (No Cancer)"}
+          </span><br>
+          Probabilities: [${result.probability.map(p => p.toFixed(6)).join(", ")}]
+        `;
+      } catch (error) {
+        document.getElementById("result").innerHTML = "Error: " + error;
+      }
+    });
+  </script>
+</body>
+</html>
